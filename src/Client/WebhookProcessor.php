@@ -99,6 +99,8 @@ final class WebhookProcessor
     private function storeWebhook(Request $request): WebhookCall
     {
         $modelClass = $this->getWebhookModel();
+
+        /** @var array<string> $storeHeaders */
         $storeHeaders = Config::get("webhook.client.configs.{$this->configName}.store_headers", ['*']);
 
         $headers = $this->filterHeaders($request->headers->all(), $storeHeaders);
@@ -149,6 +151,7 @@ final class WebhookProcessor
      */
     private function queueProcessing(WebhookCall $webhookCall): void
     {
+        /** @var class-string<ProcessesWebhook> $jobClass */
         $jobClass = Config::get(
             "webhook.client.configs.{$this->configName}.process_webhook_job",
             ProcessWebhookJob::class,
@@ -174,6 +177,7 @@ final class WebhookProcessor
      */
     private function getSignatureValidator(): SignatureValidator
     {
+        /** @var class-string<SignatureValidator> $validatorClass */
         $validatorClass = Config::get("webhook.client.configs.{$this->configName}.signature_validator");
 
         return app($validatorClass);
@@ -184,6 +188,7 @@ final class WebhookProcessor
      */
     private function getSigningSecret(): string
     {
+        /** @var string $secret */
         return Config::get("webhook.client.configs.{$this->configName}.signing_secret");
     }
 
@@ -192,6 +197,7 @@ final class WebhookProcessor
      */
     private function getWebhookProfile(): WebhookProfile
     {
+        /** @var class-string<WebhookProfile> $profileClass */
         $profileClass = Config::get("webhook.client.configs.{$this->configName}.webhook_profile");
 
         return app($profileClass);
@@ -202,6 +208,7 @@ final class WebhookProcessor
      */
     private function getWebhookResponse(): WebhookResponse
     {
+        /** @var class-string<WebhookResponse> $responseClass */
         $responseClass = Config::get("webhook.client.configs.{$this->configName}.webhook_response");
 
         return app($responseClass);
@@ -214,6 +221,7 @@ final class WebhookProcessor
      */
     private function getWebhookModel(): string
     {
+        /** @var class-string<WebhookCall> $modelClass */
         return Config::get("webhook.client.configs.{$this->configName}.webhook_model");
     }
 }
