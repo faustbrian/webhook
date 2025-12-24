@@ -19,6 +19,6 @@ final class WebhookNotFoundException extends WebhookException
 {
     public static function make(string $webhookId): self
     {
-        return new self("Webhook not found: {$webhookId}");
+        return new self('Webhook not found: ' . $webhookId);
     }
 }

@@ -19,6 +19,6 @@ final class InvalidUrlException extends WebhookException
 {
     public static function make(string $url): self
     {
-        return new self("Invalid webhook URL: {$url}");
+        return new self('Invalid webhook URL: ' . $url);
     }
 }

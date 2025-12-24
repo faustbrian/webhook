@@ -19,6 +19,6 @@ final class InvalidSignatureException extends WebhookException
 {
     public static function make(string $webhookId): self
     {
-        return new self("Invalid webhook signature for webhook ID: {$webhookId}");
+        return new self('Invalid webhook signature for webhook ID: ' . $webhookId);
     }
 }

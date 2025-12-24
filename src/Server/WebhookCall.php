@@ -343,12 +343,29 @@ final class WebhookCall
      */
     private function prepareDefaults(): void
     {
-        $this->httpVerb = $this->httpVerb ?: Config::get('webhook.server.http_verb', 'POST');
-        $this->timeoutInSeconds = $this->timeoutInSeconds ?: Config::get('webhook.server.timeout_in_seconds', 3);
-        $this->tries = $this->tries ?: Config::get('webhook.server.tries', 3);
-        $this->verifySsl = Config::get('webhook.server.verify_ssl', true);
-        $this->throwExceptionOnFailure = $this->throwExceptionOnFailure ?: Config::get('webhook.server.throw_exception_on_failure', false);
-        $this->queue = $this->queue ?: Config::get('webhook.server.queue');
+        /** @var string $httpVerb */
+        $httpVerb = Config::get('webhook.server.http_verb', 'POST');
+        $this->httpVerb = $this->httpVerb ?: $httpVerb;
+
+        /** @var int $timeout */
+        $timeout = Config::get('webhook.server.timeout_in_seconds', 3);
+        $this->timeoutInSeconds = $this->timeoutInSeconds ?: $timeout;
+
+        /** @var int $tries */
+        $tries = Config::get('webhook.server.tries', 3);
+        $this->tries = $this->tries ?: $tries;
+
+        /** @var bool $verifySsl */
+        $verifySsl = Config::get('webhook.server.verify_ssl', true);
+        $this->verifySsl = $verifySsl;
+
+        /** @var bool $throwOnFailure */
+        $throwOnFailure = Config::get('webhook.server.throw_exception_on_failure', false);
+        $this->throwExceptionOnFailure = $this->throwExceptionOnFailure ?: $throwOnFailure;
+
+        /** @var string|null $queue */
+        $queue = Config::get('webhook.server.queue');
+        $this->queue = $this->queue ?: $queue;
     }
 
     /**
@@ -356,20 +373,20 @@ final class WebhookCall
      */
     private function resolveSigner(): Signer
     {
-        if ($this->signer) {
+        if ($this->signer instanceof Signer) {
             return $this->signer;
         }
 
-        $version = $this->signatureVersion ?? SignatureVersion::from(
-            Config::get('webhook.server.signature_version', SignatureVersion::V1_HMAC->value),
-        );
+        /** @var string|int $configVersion */
+        $configVersion = Config::get('webhook.server.signature_version', SignatureVersion::V1_HMAC->value);
+        $version = $this->signatureVersion ?? SignatureVersion::from($configVersion);
 
         return match ($version) {
             SignatureVersion::V1_HMAC => new HmacSigner(
-                $this->secret ?? Config::get('webhook.server.signing_secret'),
+                $this->secret ?? (string) Config::get('webhook.server.signing_secret'),
             ),
             SignatureVersion::V1A_ED25519 => new Ed25519Signer(
-                $this->ed25519PrivateKey ?? Config::get('webhook.server.ed25519_private_key'),
+                $this->ed25519PrivateKey ?? (string) Config::get('webhook.server.ed25519_private_key'),
             ),
         };
     }

@@ -17,7 +17,7 @@ use Throwable;
  * Fired when a webhook call attempt fails.
  * @author Brian Faust <brian@cline.sh>
  */
-final class WebhookCallFailedEvent
+final readonly class WebhookCallFailedEvent
 {
     use Dispatchable;
     use SerializesModels;
@@ -29,9 +29,9 @@ final class WebhookCallFailedEvent
      * @param Throwable $exception The exception that caused failure
      */
     public function __construct(
-        public readonly string $webhookId,
-        public readonly string $url,
-        public readonly int $attempt,
-        public readonly Throwable $exception,
+        public string $webhookId,
+        public string $url,
+        public int $attempt,
+        public Throwable $exception,
     ) {}
 }

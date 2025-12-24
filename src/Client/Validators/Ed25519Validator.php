@@ -24,15 +24,10 @@ use function str_contains;
  * Ed25519 signature validator per Standard Webhooks spec.
  * @author Brian Faust <brian@cline.sh>
  */
-final class Ed25519Validator implements SignatureValidator
+final readonly class Ed25519Validator implements SignatureValidator
 {
-    private readonly TimestampValidator $timestampValidator;
-
-    public function __construct(
-        private readonly string $publicKey,
-        ?TimestampValidator $timestampValidator = null,
-    ) {
-        $this->timestampValidator = $timestampValidator ?? new TimestampValidator();
+    public function __construct(private string $publicKey, private ?TimestampValidator $timestampValidator = new TimestampValidator())
+    {
     }
 
     /**
@@ -51,7 +46,7 @@ final class Ed25519Validator implements SignatureValidator
         $payload = $request->getContent();
 
         // Build signed content: {id}.{timestamp}.{payload}
-        $signedContent = "{$webhookId}.{$timestamp}.{$payload}";
+        $signedContent = sprintf('%s.%d.%s', $webhookId, $timestamp, $payload);
 
         // Parse signatures
         $receivedSignatures = $this->parseSignatures($signatures);

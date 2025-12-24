@@ -24,6 +24,6 @@ final class DefaultResponse implements WebhookResponse
      */
     public function response(WebhookCall $webhookCall): Response
     {
-        return new Response('Webhook received', 200);
+        return new Response('Webhook received', \Symfony\Component\HttpFoundation\Response::HTTP_OK);
     }
 }

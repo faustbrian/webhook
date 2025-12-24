@@ -21,10 +21,10 @@ use function hash_hmac;
  * @author Brian Faust <brian@cline.sh>
  * @see https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md
  */
-final class HmacSigner implements Signer
+final readonly class HmacSigner implements Signer
 {
     public function __construct(
-        private readonly string $secret,
+        private string $secret,
     ) {}
 
     /**
@@ -32,7 +32,7 @@ final class HmacSigner implements Signer
      */
     public function sign(string $webhookId, int $timestamp, string $payload): string
     {
-        $signedContent = "{$webhookId}.{$timestamp}.{$payload}";
+        $signedContent = sprintf('%s.%d.%s', $webhookId, $timestamp, $payload);
         $signature = hash_hmac('sha256', $signedContent, $this->secret, true);
         $encoded = base64_encode($signature);
 

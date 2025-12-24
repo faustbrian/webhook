@@ -17,7 +17,7 @@ use Throwable;
  * Fired when all webhook retry attempts are exhausted.
  * @author Brian Faust <brian@cline.sh>
  */
-final class FinalWebhookCallFailedEvent
+final readonly class FinalWebhookCallFailedEvent
 {
     use Dispatchable;
     use SerializesModels;
@@ -29,9 +29,9 @@ final class FinalWebhookCallFailedEvent
      * @param Throwable $lastException The last exception encountered
      */
     public function __construct(
-        public readonly string $webhookId,
-        public readonly string $url,
-        public readonly int $totalAttempts,
-        public readonly Throwable $lastException,
+        public string $webhookId,
+        public string $url,
+        public int $totalAttempts,
+        public Throwable $lastException,
     ) {}
 }

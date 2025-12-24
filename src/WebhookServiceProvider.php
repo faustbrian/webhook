@@ -13,10 +13,8 @@ use Cline\Webhook\Client\Http\Controllers\WebhookController;
 use Cline\Webhook\Client\Validators\Ed25519Validator;
 use Cline\Webhook\Support\TimestampValidator;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\ServiceProvider;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -52,10 +50,9 @@ final class WebhookServiceProvider extends PackageServiceProvider
     private function registerRouteMacro(): void
     {
         Route::macro('webhooks', function (string $url, string $configName = 'default'): void {
-            /** @var Router $this */
             Route::post($url, WebhookController::class)
                 ->withoutMiddleware([VerifyCsrfToken::class])
-                ->name("webhook.{$configName}");
+                ->name('webhook.' . $configName);
         });
     }
 
@@ -65,10 +62,12 @@ final class WebhookServiceProvider extends PackageServiceProvider
     private function registerValidators(): void
     {
         // Register Ed25519Validator with public key from config
-        $this->app->bind(Ed25519Validator::class, function (): Ed25519Validator {
+        $this->app->bind(function (): Ed25519Validator {
             $configName = 'default'; // Could be made contextual
-            $publicKey = Config::get("webhook.client.configs.{$configName}.ed25519_public_key");
-            $tolerance = Config::get("webhook.client.configs.{$configName}.timestamp_tolerance_seconds", 300);
+            /** @var string $publicKey */
+            $publicKey = Config::get(sprintf('webhook.client.configs.%s.ed25519_public_key', $configName));
+            /** @var int $tolerance */
+            $tolerance = Config::get(sprintf('webhook.client.configs.%s.timestamp_tolerance_seconds', $configName), 300);
 
             return new Ed25519Validator(
                 $publicKey,

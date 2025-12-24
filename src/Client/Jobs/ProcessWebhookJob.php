@@ -20,8 +20,6 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Config;
 use Throwable;
 
-use function app;
-
 /**
  * Job to process webhook calls asynchronously.
  * @author Brian Faust <brian@cline.sh>
@@ -50,11 +48,11 @@ final class ProcessWebhookJob implements ShouldQueue
 
             $this->webhookCall->markAsProcessed();
 
-            WebhookProcessedEvent::dispatch($this->webhookCall);
-        } catch (Throwable $exception) {
-            $this->webhookCall->markAsFailed($exception);
+            event(new WebhookProcessedEvent($this->webhookCall));
+        } catch (Throwable $throwable) {
+            $this->webhookCall->markAsFailed($throwable);
 
-            throw $exception;
+            throw $throwable;
         }
     }
 
@@ -72,12 +70,13 @@ final class ProcessWebhookJob implements ShouldQueue
     private function getProcessor(): ProcessesWebhook
     {
         // Check if a custom processor is configured for this config
+        /** @var class-string<ProcessesWebhook>|null $processorClass */
         $processorClass = Config::get(
-            "webhook.client.configs.{$this->webhookCall->config_name}.webhook_processor",
+            sprintf('webhook.client.configs.%s.webhook_processor', $this->webhookCall->config_name),
         );
 
         if ($processorClass) {
-            return app($processorClass);
+            return resolve($processorClass);
         }
 
         // No processor configured - this is valid if you just want to store webhooks

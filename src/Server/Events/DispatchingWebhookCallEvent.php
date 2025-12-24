@@ -16,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
  * Fired before dispatching a webhook call.
  * @author Brian Faust <brian@cline.sh>
  */
-final class DispatchingWebhookCallEvent
+final readonly class DispatchingWebhookCallEvent
 {
     use Dispatchable;
     use SerializesModels;
@@ -28,9 +28,9 @@ final class DispatchingWebhookCallEvent
      * @param array<string, string> $headers   HTTP headers
      */
     public function __construct(
-        public readonly string $webhookId,
-        public readonly string $url,
-        public readonly array $payload,
-        public readonly array $headers,
+        public string $webhookId,
+        public string $url,
+        public array $payload,
+        public array $headers,
     ) {}
 }

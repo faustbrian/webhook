@@ -17,13 +17,13 @@ use Illuminate\Queue\SerializesModels;
  * Fired when a valid webhook is received and stored.
  * @author Brian Faust <brian@cline.sh>
  */
-final class WebhookReceivedEvent
+final readonly class WebhookReceivedEvent
 {
     use Dispatchable;
     use SerializesModels;
 
     public function __construct(
-        public readonly WebhookCall $webhookCall,
-        public readonly string $configName,
+        public WebhookCall $webhookCall,
+        public string $configName,
     ) {}
 }

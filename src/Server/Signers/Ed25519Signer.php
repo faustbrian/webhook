@@ -23,10 +23,10 @@ use function sodium_crypto_sign_detached;
  * @author Brian Faust <brian@cline.sh>
  * @see https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md
  */
-final class Ed25519Signer implements Signer
+final readonly class Ed25519Signer implements Signer
 {
     public function __construct(
-        private readonly string $privateKey,
+        private string $privateKey,
     ) {}
 
     /**
@@ -34,16 +34,15 @@ final class Ed25519Signer implements Signer
      */
     public function sign(string $webhookId, int $timestamp, string $payload): string
     {
-        $signedContent = "{$webhookId}.{$timestamp}.{$payload}";
+        $signedContent = sprintf('%s.%d.%s', $webhookId, $timestamp, $payload);
 
         // Decode the base64-encoded private key
         $decodedKey = base64_decode($this->privateKey, true);
 
-        if ($decodedKey === false) {
-            throw new InvalidArgumentException('Invalid Ed25519 private key format');
-        }
+        throw_if($decodedKey === false, InvalidArgumentException::class, 'Invalid Ed25519 private key format');
 
         // Sign using sodium extension
+        /** @var non-empty-string $decodedKey */
         $signature = sodium_crypto_sign_detached($signedContent, $decodedKey);
         $encoded = base64_encode($signature);
 

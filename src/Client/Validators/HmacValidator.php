@@ -25,13 +25,10 @@ use function str_contains;
  * HMAC-SHA256 signature validator per Standard Webhooks spec.
  * @author Brian Faust <brian@cline.sh>
  */
-final class HmacValidator implements SignatureValidator
+final readonly class HmacValidator implements SignatureValidator
 {
-    private readonly TimestampValidator $timestampValidator;
-
-    public function __construct(?TimestampValidator $timestampValidator = null)
+    public function __construct(private ?TimestampValidator $timestampValidator = new TimestampValidator())
     {
-        $this->timestampValidator = $timestampValidator ?? new TimestampValidator();
     }
 
     /**
@@ -50,7 +47,7 @@ final class HmacValidator implements SignatureValidator
         $payload = $request->getContent();
 
         // Build signed content: {id}.{timestamp}.{payload}
-        $signedContent = "{$webhookId}.{$timestamp}.{$payload}";
+        $signedContent = sprintf('%s.%d.%s', $webhookId, $timestamp, $payload);
 
         // Parse signatures (can have multiple versions: "v1,sig1 v1,sig2")
         $receivedSignatures = $this->parseSignatures($signatures);

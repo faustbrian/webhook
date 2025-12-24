@@ -9,6 +9,7 @@
 
 namespace Cline\Webhook\Client\Models;
 
+use Illuminate\Support\Facades\Date;
 use Carbon\Carbon;
 use Cline\Webhook\Client\Models\Builders\WebhookCallBuilder;
 use Cline\Webhook\Enums\WebhookStatus;
@@ -70,9 +71,9 @@ final class WebhookCall extends Model
      */
     public function prunable(): Builder
     {
-        $days = Config::get("webhook.client.configs.{$this->config_name}.delete_after_days", 30);
+        $days = Config::get(sprintf('webhook.client.configs.%s.delete_after_days', $this->config_name), 30);
 
-        return self::where('created_at', '<=', Carbon::now()->subDays($days));
+        return self::query()->where('created_at', '<=', Date::now()->subDays($days));
     }
 
     /**
@@ -93,7 +94,7 @@ final class WebhookCall extends Model
     {
         $this->update([
             'status' => WebhookStatus::PROCESSED,
-            'processed_at' => Carbon::now(),
+            'processed_at' => Date::now(),
             'exception' => null,
         ]);
     }

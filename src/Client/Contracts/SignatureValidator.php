@@ -9,6 +9,8 @@
 
 namespace Cline\Webhook\Client\Contracts;
 
+use Cline\Webhook\Client\Exceptions\InvalidSignatureException;
+use Cline\Webhook\Exceptions\Client\InvalidTimestampException;
 use Illuminate\Http\Request;
 
 /**
@@ -20,8 +22,8 @@ interface SignatureValidator
     /**
      * Verify webhook signature.
      *
-     * @throws \Cline\Webhook\Client\Exceptions\InvalidSignatureException
-     * @throws \Cline\Webhook\Exceptions\Client\InvalidTimestampException
+     * @throws InvalidSignatureException
+     * @throws InvalidTimestampException
      */
     public function verify(Request $request, string $secret): void;
 

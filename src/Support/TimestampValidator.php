@@ -9,9 +9,8 @@
 
 namespace Cline\Webhook\Support;
 
+use Illuminate\Support\Facades\Date;
 use Cline\Webhook\Exceptions\Client\InvalidTimestampException;
-
-use function time;
 
 /**
  * Validates webhook timestamps for replay attack prevention.
@@ -20,13 +19,13 @@ use function time;
  * Timestamps must be within a configured tolerance window.
  * @author Brian Faust <brian@cline.sh>
  */
-final class TimestampValidator
+final readonly class TimestampValidator
 {
     /**
      * @param int $toleranceSeconds Maximum age in seconds for a webhook (default: 5 minutes)
      */
     public function __construct(
-        private readonly int $toleranceSeconds = 300,
+        private int $toleranceSeconds = 300,
     ) {}
 
     /**
@@ -34,7 +33,7 @@ final class TimestampValidator
      */
     public static function generate(): int
     {
-        return time();
+        return Date::now()->getTimestamp();
     }
 
     /**
@@ -44,7 +43,7 @@ final class TimestampValidator
      */
     public function validate(int $timestamp): void
     {
-        $now = time();
+        $now = Date::now()->getTimestamp();
         $age = $now - $timestamp;
 
         // Timestamp is in the future

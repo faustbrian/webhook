@@ -64,6 +64,7 @@ final class CallWebhookJob implements ShouldQueue
         private readonly string $httpVerb,
         private readonly array $payload,
         private readonly array $headers,
+        /** @phpstan-ignore property.onlyWritten */
         private readonly array $meta,
         private readonly array $tags,
         private readonly Signer $signer,
@@ -82,7 +83,7 @@ final class CallWebhookJob implements ShouldQueue
      */
     public function tags(): array
     {
-        return array_merge($this->tags, ['webhook', "webhook:{$this->webhookId}"]);
+        return array_merge($this->tags, ['webhook', 'webhook:' . $this->webhookId]);
     }
 
     /**
@@ -100,8 +101,8 @@ final class CallWebhookJob implements ShouldQueue
     {
         try {
             $this->dispatchWebhook();
-        } catch (Throwable $exception) {
-            $this->handleFailure($exception);
+        } catch (Throwable $throwable) {
+            $this->handleFailure($throwable);
         }
     }
 
@@ -131,12 +132,7 @@ final class CallWebhookJob implements ShouldQueue
             'webhook-signature' => $signature,
         ]);
 
-        DispatchingWebhookCallEvent::dispatch(
-            $this->webhookId,
-            $this->url,
-            $this->payload,
-            $headers,
-        );
+        event(new DispatchingWebhookCallEvent($this->webhookId, $this->url, $this->payload, $headers));
 
         $client = new Client([
             'timeout' => $this->timeoutInSeconds,
@@ -153,12 +149,7 @@ final class CallWebhookJob implements ShouldQueue
 
             // Consider 2xx responses as success
             if ($statusCode >= 200 && $statusCode < 300) {
-                WebhookCallSucceededEvent::dispatch(
-                    $this->webhookId,
-                    $this->url,
-                    $statusCode,
-                    $this->attempts(),
-                );
+                event(new WebhookCallSucceededEvent($this->webhookId, $this->url, $statusCode, $this->attempts()));
 
                 return;
             }
@@ -169,8 +160,8 @@ final class CallWebhookJob implements ShouldQueue
                 $statusCode,
                 $response->getBody()->getContents(),
             );
-        } catch (RequestException $exception) {
-            throw WebhookCallException::dispatchFailed($this->url, $exception);
+        } catch (RequestException $requestException) {
+            throw WebhookCallException::dispatchFailed($this->url, $requestException);
         }
     }
 
@@ -181,26 +172,14 @@ final class CallWebhookJob implements ShouldQueue
      */
     private function handleFailure(Throwable $exception): void
     {
-        WebhookCallFailedEvent::dispatch(
-            $this->webhookId,
-            $this->url,
-            $this->attempts(),
-            $exception,
-        );
+        event(new WebhookCallFailedEvent($this->webhookId, $this->url, $this->attempts(), $exception));
 
         // Check if we have more attempts
-        if ($this->attempts() < $this->tries) {
-            // Re-throw to trigger Laravel's retry mechanism
-            throw $exception;
-        }
+        // Re-throw to trigger Laravel's retry mechanism
+        throw_if($this->attempts() < $this->tries, $exception);
 
         // Final failure - all retries exhausted
-        FinalWebhookCallFailedEvent::dispatch(
-            $this->webhookId,
-            $this->url,
-            $this->attempts(),
-            $exception,
-        );
+        event(new FinalWebhookCallFailedEvent($this->webhookId, $this->url, $this->attempts(), $exception));
 
         if ($this->throwExceptionOnFailure) {
             throw MaxRetriesExceededException::make($this->tries, $this->url);

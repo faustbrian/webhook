@@ -17,12 +17,12 @@ use Illuminate\Queue\SerializesModels;
  * Fired when a webhook is successfully processed.
  * @author Brian Faust <brian@cline.sh>
  */
-final class WebhookProcessedEvent
+final readonly class WebhookProcessedEvent
 {
     use Dispatchable;
     use SerializesModels;
 
     public function __construct(
-        public readonly WebhookCall $webhookCall,
+        public WebhookCall $webhookCall,
     ) {}
 }

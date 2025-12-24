@@ -17,13 +17,13 @@ use Illuminate\Queue\SerializesModels;
  * Fired when a webhook signature verification fails.
  * @author Brian Faust <brian@cline.sh>
  */
-final class InvalidWebhookSignatureEvent
+final readonly class InvalidWebhookSignatureEvent
 {
     use Dispatchable;
     use SerializesModels;
 
     public function __construct(
-        public readonly Request $request,
-        public readonly string $configName,
+        public Request $request,
+        public string $configName,
     ) {}
 }

@@ -19,13 +19,13 @@ final class InvalidTimestampException extends WebhookException
 {
     public static function future(int $timestamp, int $now): self
     {
-        return new self("Webhook timestamp ({$timestamp}) is in the future (current: {$now})");
+        return new self(sprintf('Webhook timestamp (%d) is in the future (current: %d)', $timestamp, $now));
     }
 
     public static function expired(int $timestamp, int $now, int $tolerance): self
     {
         $age = $now - $timestamp;
 
-        return new self("Webhook timestamp ({$timestamp}) is too old. Age: {$age}s, Tolerance: {$tolerance}s");
+        return new self(sprintf('Webhook timestamp (%d) is too old. Age: %ds, Tolerance: %ds', $timestamp, $age, $tolerance));
     }
 }

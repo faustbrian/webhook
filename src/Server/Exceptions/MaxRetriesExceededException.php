@@ -19,6 +19,6 @@ final class MaxRetriesExceededException extends WebhookException
 {
     public static function make(int $maxRetries, string $url): self
     {
-        return new self("Maximum retry attempts ({$maxRetries}) exceeded for webhook: {$url}");
+        return new self(sprintf('Maximum retry attempts (%d) exceeded for webhook: %s', $maxRetries, $url));
     }
 }

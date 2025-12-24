@@ -20,7 +20,7 @@ use function random_int;
  * Uses the formula: base * (2 ^ attempt) with random jitter
  * @author Brian Faust <brian@cline.sh>
  */
-final class ExponentialBackoffStrategy implements BackoffStrategy
+final readonly class ExponentialBackoffStrategy implements BackoffStrategy
 {
     /**
      * @param int  $baseDelaySeconds Base delay in seconds (default: 1)
@@ -28,9 +28,9 @@ final class ExponentialBackoffStrategy implements BackoffStrategy
      * @param bool $useJitter        Add random jitter to prevent thundering herd
      */
     public function __construct(
-        private readonly int $baseDelaySeconds = 1,
-        private readonly int $maxDelaySeconds = 3_600,
-        private readonly bool $useJitter = true,
+        private int $baseDelaySeconds = 1,
+        private int $maxDelaySeconds = 3_600,
+        private bool $useJitter = true,
     ) {}
 
     /**

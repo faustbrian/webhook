@@ -21,8 +21,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Jobs\ProcessWebhookJob;
-
-use function app;
 use function array_map;
 use function dispatch;
 use function in_array;
@@ -33,13 +31,13 @@ use function mb_strtolower;
  * Processes incoming webhook requests.
  * @author Brian Faust <brian@cline.sh>
  */
-final class WebhookProcessor
+final readonly class WebhookProcessor
 {
     /**
      * @param string $configName Configuration name from webhook.client.configs
      */
     public function __construct(
-        private readonly string $configName = 'default',
+        private string $configName = 'default',
     ) {}
 
     /**
@@ -49,21 +47,21 @@ final class WebhookProcessor
     {
         // Verify signature
         if (!$this->verifySignature($request)) {
-            InvalidWebhookSignatureEvent::dispatch($request, $this->configName);
+            event(new InvalidWebhookSignatureEvent($request, $this->configName));
 
-            return new Response('Invalid signature', 401);
+            return new Response('Invalid signature', \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
         }
 
         // Check if webhook should be processed via profile
         if (!$this->shouldProcess($request)) {
-            return new Response('Webhook ignored', 200);
+            return new Response('Webhook ignored', \Symfony\Component\HttpFoundation\Response::HTTP_OK);
         }
 
         // Store webhook
         $webhookCall = $this->storeWebhook($request);
 
         // Dispatch event
-        WebhookReceivedEvent::dispatch($webhookCall, $this->configName);
+        event(new WebhookReceivedEvent($webhookCall, $this->configName));
 
         // Queue processing job
         $this->queueProcessing($webhookCall);
@@ -101,11 +99,11 @@ final class WebhookProcessor
         $modelClass = $this->getWebhookModel();
 
         /** @var array<string> $storeHeaders */
-        $storeHeaders = Config::get("webhook.client.configs.{$this->configName}.store_headers", ['*']);
+        $storeHeaders = Config::get(sprintf('webhook.client.configs.%s.store_headers', $this->configName), ['*']);
 
         $headers = $this->filterHeaders($request->headers->all(), $storeHeaders);
 
-        return $modelClass::create([
+        return $modelClass::query()->create([
             'config_name' => $this->configName,
             'webhook_id' => $request->header('webhook-id'),
             'timestamp' => (int) $request->header('webhook-timestamp'),
@@ -127,7 +125,7 @@ final class WebhookProcessor
     {
         // Store all headers if wildcard
         if (in_array('*', $storeHeaders, true)) {
-            return array_map(fn ($values) => $values[0] ?? '', $allHeaders);
+            return array_map(fn (array $values): string => $values[0] ?? '', $allHeaders);
         }
 
         // Store only specified headers
@@ -153,7 +151,7 @@ final class WebhookProcessor
     {
         /** @var class-string<ProcessesWebhook> $jobClass */
         $jobClass = Config::get(
-            "webhook.client.configs.{$this->configName}.process_webhook_job",
+            sprintf('webhook.client.configs.%s.process_webhook_job', $this->configName),
             ProcessWebhookJob::class,
         );
 
@@ -178,9 +176,9 @@ final class WebhookProcessor
     private function getSignatureValidator(): SignatureValidator
     {
         /** @var class-string<SignatureValidator> $validatorClass */
-        $validatorClass = Config::get("webhook.client.configs.{$this->configName}.signature_validator");
+        $validatorClass = Config::get(sprintf('webhook.client.configs.%s.signature_validator', $this->configName));
 
-        return app($validatorClass);
+        return resolve($validatorClass);
     }
 
     /**
@@ -189,7 +187,9 @@ final class WebhookProcessor
     private function getSigningSecret(): string
     {
         /** @var string $secret */
-        return Config::get("webhook.client.configs.{$this->configName}.signing_secret");
+        $secret = Config::get(sprintf('webhook.client.configs.%s.signing_secret', $this->configName));
+
+        return $secret;
     }
 
     /**
@@ -198,9 +198,9 @@ final class WebhookProcessor
     private function getWebhookProfile(): WebhookProfile
     {
         /** @var class-string<WebhookProfile> $profileClass */
-        $profileClass = Config::get("webhook.client.configs.{$this->configName}.webhook_profile");
+        $profileClass = Config::get(sprintf('webhook.client.configs.%s.webhook_profile', $this->configName));
 
-        return app($profileClass);
+        return resolve($profileClass);
     }
 
     /**
@@ -209,9 +209,9 @@ final class WebhookProcessor
     private function getWebhookResponse(): WebhookResponse
     {
         /** @var class-string<WebhookResponse> $responseClass */
-        $responseClass = Config::get("webhook.client.configs.{$this->configName}.webhook_response");
+        $responseClass = Config::get(sprintf('webhook.client.configs.%s.webhook_response', $this->configName));
 
-        return app($responseClass);
+        return resolve($responseClass);
     }
 
     /**
@@ -222,6 +222,8 @@ final class WebhookProcessor
     private function getWebhookModel(): string
     {
         /** @var class-string<WebhookCall> $modelClass */
-        return Config::get("webhook.client.configs.{$this->configName}.webhook_model");
+        $modelClass = Config::get(sprintf('webhook.client.configs.%s.webhook_model', $this->configName));
+
+        return $modelClass;
     }
 }

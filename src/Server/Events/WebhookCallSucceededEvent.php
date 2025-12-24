@@ -16,7 +16,7 @@ use Illuminate\Queue\SerializesModels;
  * Fired when a webhook call succeeds.
  * @author Brian Faust <brian@cline.sh>
  */
-final class WebhookCallSucceededEvent
+final readonly class WebhookCallSucceededEvent
 {
     use Dispatchable;
     use SerializesModels;
@@ -28,9 +28,9 @@ final class WebhookCallSucceededEvent
      * @param int    $attempt    Attempt number
      */
     public function __construct(
-        public readonly string $webhookId,
-        public readonly string $url,
-        public readonly int $statusCode,
-        public readonly int $attempt,
+        public string $webhookId,
+        public string $url,
+        public int $statusCode,
+        public int $attempt,
     ) {}
 }
