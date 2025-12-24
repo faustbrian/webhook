@@ -1,6 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Server\Jobs;
 
@@ -19,9 +24,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Throwable;
+
+use const JSON_THROW_ON_ERROR;
+
+use function array_merge;
+use function json_encode;
 
 /**
  * Job to dispatch webhook calls with retry logic and exponential backoff.
+ * @author Brian Faust <brian@cline.sh>
  */
 final class CallWebhookJob implements ShouldQueue
 {
@@ -31,20 +43,20 @@ final class CallWebhookJob implements ShouldQueue
     use SerializesModels;
 
     /**
-     * @param  string  $webhookId  Unique webhook identifier
-     * @param  string  $url  Target URL
-     * @param  string  $httpVerb  HTTP method
-     * @param  array<string, mixed>  $payload  Webhook payload
-     * @param  array<string, string>  $headers  Custom headers
-     * @param  array<string, mixed>  $meta  Metadata
-     * @param  array<string>  $tags  Queue tags
-     * @param  Signer  $signer  Signature generator
-     * @param  int  $timestamp  Unix timestamp
-     * @param  int  $tries  Maximum attempts
-     * @param  BackoffStrategy  $backoffStrategy  Retry backoff calculator
-     * @param  int  $timeoutInSeconds  Request timeout
-     * @param  bool  $verifySsl  Verify SSL certificates
-     * @param  bool  $throwExceptionOnFailure  Throw on final failure
+     * @param string                $webhookId               Unique webhook identifier
+     * @param string                $url                     Target URL
+     * @param string                $httpVerb                HTTP method
+     * @param array<string, mixed>  $payload                 Webhook payload
+     * @param array<string, string> $headers                 Custom headers
+     * @param array<string, mixed>  $meta                    Metadata
+     * @param array<string>         $tags                    Queue tags
+     * @param Signer                $signer                  Signature generator
+     * @param int                   $timestamp               Unix timestamp
+     * @param int                   $tries                   Maximum attempts
+     * @param BackoffStrategy       $backoffStrategy         Retry backoff calculator
+     * @param int                   $timeoutInSeconds        Request timeout
+     * @param bool                  $verifySsl               Verify SSL certificates
+     * @param bool                  $throwExceptionOnFailure Throw on final failure
      */
     public function __construct(
         private readonly string $webhookId,
@@ -56,7 +68,7 @@ final class CallWebhookJob implements ShouldQueue
         private readonly array $tags,
         private readonly Signer $signer,
         private readonly int $timestamp,
-        public int $tries,
+        public readonly int $tries,
         private readonly BackoffStrategy $backoffStrategy,
         private readonly int $timeoutInSeconds,
         private readonly bool $verifySsl,
@@ -70,7 +82,7 @@ final class CallWebhookJob implements ShouldQueue
      */
     public function tags(): array
     {
-        return \array_merge($this->tags, ['webhook', "webhook:{$this->webhookId}"]);
+        return array_merge($this->tags, ['webhook', "webhook:{$this->webhookId}"]);
     }
 
     /**
@@ -88,9 +100,18 @@ final class CallWebhookJob implements ShouldQueue
     {
         try {
             $this->dispatchWebhook();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $this->handleFailure($exception);
         }
+    }
+
+    /**
+     * Handle job failure.
+     */
+    public function failed(Throwable $exception): void
+    {
+        // Final failure event already dispatched in handleFailure
+        // This is called by Laravel's queue worker
     }
 
     /**
@@ -100,10 +121,10 @@ final class CallWebhookJob implements ShouldQueue
      */
     private function dispatchWebhook(): void
     {
-        $payloadJson = \json_encode($this->payload, \JSON_THROW_ON_ERROR);
+        $payloadJson = json_encode($this->payload, JSON_THROW_ON_ERROR);
         $signature = $this->signer->sign($this->webhookId, $this->timestamp, $payloadJson);
 
-        $headers = \array_merge($this->headers, [
+        $headers = array_merge($this->headers, [
             'Content-Type' => 'application/json',
             'webhook-id' => $this->webhookId,
             'webhook-timestamp' => (string) $this->timestamp,
@@ -114,7 +135,7 @@ final class CallWebhookJob implements ShouldQueue
             $this->webhookId,
             $this->url,
             $this->payload,
-            $headers
+            $headers,
         );
 
         $client = new Client([
@@ -136,7 +157,7 @@ final class CallWebhookJob implements ShouldQueue
                     $this->webhookId,
                     $this->url,
                     $statusCode,
-                    $this->attempts()
+                    $this->attempts(),
                 );
 
                 return;
@@ -146,7 +167,7 @@ final class CallWebhookJob implements ShouldQueue
             throw WebhookCallException::httpError(
                 $this->url,
                 $statusCode,
-                $response->getBody()->getContents()
+                $response->getBody()->getContents(),
             );
         } catch (RequestException $exception) {
             throw WebhookCallException::dispatchFailed($this->url, $exception);
@@ -156,15 +177,15 @@ final class CallWebhookJob implements ShouldQueue
     /**
      * Handle webhook failure.
      *
-     * @throws WebhookCallException|MaxRetriesExceededException
+     * @throws MaxRetriesExceededException|WebhookCallException
      */
-    private function handleFailure(\Throwable $exception): void
+    private function handleFailure(Throwable $exception): void
     {
         WebhookCallFailedEvent::dispatch(
             $this->webhookId,
             $this->url,
             $this->attempts(),
-            $exception
+            $exception,
         );
 
         // Check if we have more attempts
@@ -178,20 +199,11 @@ final class CallWebhookJob implements ShouldQueue
             $this->webhookId,
             $this->url,
             $this->attempts(),
-            $exception
+            $exception,
         );
 
         if ($this->throwExceptionOnFailure) {
             throw MaxRetriesExceededException::make($this->tries, $this->url);
         }
-    }
-
-    /**
-     * Handle job failure.
-     */
-    public function failed(\Throwable $exception): void
-    {
-        // Final failure event already dispatched in handleFailure
-        // This is called by Laravel's queue worker
     }
 }

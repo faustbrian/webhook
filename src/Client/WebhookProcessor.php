@@ -1,6 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Client;
 
@@ -11,17 +16,27 @@ use Cline\Webhook\Client\Contracts\WebhookResponse;
 use Cline\Webhook\Client\Events\InvalidWebhookSignatureEvent;
 use Cline\Webhook\Client\Events\WebhookReceivedEvent;
 use Cline\Webhook\Client\Models\WebhookCall;
+use Cline\Webhook\Enums\WebhookStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
+use Jobs\ProcessWebhookJob;
+
+use function app;
+use function array_map;
+use function dispatch;
+use function in_array;
+use function json_decode;
+use function mb_strtolower;
 
 /**
  * Processes incoming webhook requests.
+ * @author Brian Faust <brian@cline.sh>
  */
 final class WebhookProcessor
 {
     /**
-     * @param  string  $configName  Configuration name from webhook.client.configs
+     * @param string $configName Configuration name from webhook.client.configs
      */
     public function __construct(
         private readonly string $configName = 'default',
@@ -33,14 +48,14 @@ final class WebhookProcessor
     public function process(Request $request): Response
     {
         // Verify signature
-        if (! $this->verifySignature($request)) {
+        if (!$this->verifySignature($request)) {
             InvalidWebhookSignatureEvent::dispatch($request, $this->configName);
 
             return new Response('Invalid signature', 401);
         }
 
         // Check if webhook should be processed via profile
-        if (! $this->shouldProcess($request)) {
+        if (!$this->shouldProcess($request)) {
             return new Response('Webhook ignored', 200);
         }
 
@@ -92,9 +107,9 @@ final class WebhookProcessor
             'config_name' => $this->configName,
             'webhook_id' => $request->header('webhook-id'),
             'timestamp' => (int) $request->header('webhook-timestamp'),
-            'payload' => \json_decode($request->getContent(), true),
+            'payload' => json_decode($request->getContent(), true),
             'headers' => $headers,
-            'status' => \Cline\Webhook\Enums\WebhookStatus::PENDING,
+            'status' => WebhookStatus::PENDING,
             'attempts' => 0,
         ]);
     }
@@ -102,24 +117,28 @@ final class WebhookProcessor
     /**
      * Filter headers based on configuration.
      *
-     * @param  array<string, array<string>>  $allHeaders
-     * @param  array<string>  $storeHeaders
+     * @param  array<string, array<string>> $allHeaders
+     * @param  array<string>                $storeHeaders
      * @return array<string, string>
      */
     private function filterHeaders(array $allHeaders, array $storeHeaders): array
     {
         // Store all headers if wildcard
-        if (\in_array('*', $storeHeaders, true)) {
-            return \array_map(fn ($values) => $values[0] ?? '', $allHeaders);
+        if (in_array('*', $storeHeaders, true)) {
+            return array_map(fn ($values) => $values[0] ?? '', $allHeaders);
         }
 
         // Store only specified headers
         $filtered = [];
+
         foreach ($storeHeaders as $header) {
-            $key = \strtolower($header);
-            if (isset($allHeaders[$key])) {
-                $filtered[$key] = $allHeaders[$key][0] ?? '';
+            $key = mb_strtolower($header);
+
+            if (!isset($allHeaders[$key])) {
+                continue;
             }
+
+            $filtered[$key] = $allHeaders[$key][0] ?? '';
         }
 
         return $filtered;
@@ -132,10 +151,12 @@ final class WebhookProcessor
     {
         $jobClass = Config::get(
             "webhook.client.configs.{$this->configName}.process_webhook_job",
-            \Cline\Webhook\Client\Jobs\ProcessWebhookJob::class
+            ProcessWebhookJob::class,
         );
 
-        \dispatch(new $jobClass($webhookCall));
+        dispatch(
+            new $jobClass($webhookCall),
+        );
     }
 
     /**

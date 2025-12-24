@@ -1,15 +1,26 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Server\Signers;
 
 use Cline\Webhook\Enums\SignatureVersion;
 use Cline\Webhook\Server\Contracts\Signer;
+use InvalidArgumentException;
+
+use function base64_decode;
+use function base64_encode;
+use function sodium_crypto_sign_detached;
 
 /**
  * Ed25519 signature implementation per Standard Webhooks spec.
  *
+ * @author Brian Faust <brian@cline.sh>
  * @see https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md
  */
 final class Ed25519Signer implements Signer
@@ -26,15 +37,15 @@ final class Ed25519Signer implements Signer
         $signedContent = "{$webhookId}.{$timestamp}.{$payload}";
 
         // Decode the base64-encoded private key
-        $decodedKey = \base64_decode($this->privateKey, true);
+        $decodedKey = base64_decode($this->privateKey, true);
 
         if ($decodedKey === false) {
-            throw new \InvalidArgumentException('Invalid Ed25519 private key format');
+            throw new InvalidArgumentException('Invalid Ed25519 private key format');
         }
 
         // Sign using sodium extension
-        $signature = \sodium_crypto_sign_detached($signedContent, $decodedKey);
-        $encoded = \base64_encode($signature);
+        $signature = sodium_crypto_sign_detached($signedContent, $decodedKey);
+        $encoded = base64_encode($signature);
 
         return $this->version()->value.','.$encoded;
     }

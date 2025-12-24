@@ -1,6 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Client\Validators;
 
@@ -8,9 +13,17 @@ use Cline\Webhook\Client\Contracts\SignatureValidator;
 use Cline\Webhook\Client\Exceptions\InvalidSignatureException;
 use Cline\Webhook\Support\TimestampValidator;
 use Illuminate\Http\Request;
+use Throwable;
+
+use function base64_encode;
+use function explode;
+use function hash_equals;
+use function hash_hmac;
+use function str_contains;
 
 /**
  * HMAC-SHA256 signature validator per Standard Webhooks spec.
+ * @author Brian Faust <brian@cline.sh>
  */
 final class HmacValidator implements SignatureValidator
 {
@@ -67,7 +80,7 @@ final class HmacValidator implements SignatureValidator
             $this->verify($request, $secret);
 
             return true;
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return false;
         }
     }
@@ -80,14 +93,14 @@ final class HmacValidator implements SignatureValidator
     private function parseSignatures(string $header): array
     {
         $signatures = [];
-        $parts = \explode(' ', $header);
+        $parts = explode(' ', $header);
 
         foreach ($parts as $part) {
-            if (! \str_contains($part, ',')) {
+            if (!str_contains($part, ',')) {
                 continue;
             }
 
-            [$version, $signature] = \explode(',', $part, 2);
+            [$version, $signature] = explode(',', $part, 2);
             $signatures[$version][] = $signature;
         }
 
@@ -99,9 +112,9 @@ final class HmacValidator implements SignatureValidator
      */
     private function verifySignature(string $signedContent, string $receivedSignature, string $secret): bool
     {
-        $expectedSignature = \hash_hmac('sha256', $signedContent, $secret, true);
-        $expectedEncoded = \base64_encode($expectedSignature);
+        $expectedSignature = hash_hmac('sha256', $signedContent, $secret, true);
+        $expectedEncoded = base64_encode($expectedSignature);
 
-        return \hash_equals($expectedEncoded, $receivedSignature);
+        return hash_equals($expectedEncoded, $receivedSignature);
     }
 }

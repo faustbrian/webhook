@@ -1,25 +1,41 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Support;
 
 use Cline\Webhook\Exceptions\Client\InvalidTimestampException;
+
+use function time;
 
 /**
  * Validates webhook timestamps for replay attack prevention.
  *
  * Standard Webhooks requires timestamp validation to prevent replay attacks.
  * Timestamps must be within a configured tolerance window.
+ * @author Brian Faust <brian@cline.sh>
  */
 final class TimestampValidator
 {
     /**
-     * @param  int  $toleranceSeconds  Maximum age in seconds for a webhook (default: 5 minutes)
+     * @param int $toleranceSeconds Maximum age in seconds for a webhook (default: 5 minutes)
      */
     public function __construct(
         private readonly int $toleranceSeconds = 300,
     ) {}
+
+    /**
+     * Generate current timestamp.
+     */
+    public static function generate(): int
+    {
+        return time();
+    }
 
     /**
      * Validate a timestamp is within tolerance.
@@ -28,7 +44,7 @@ final class TimestampValidator
      */
     public function validate(int $timestamp): void
     {
-        $now = \time();
+        $now = time();
         $age = $now - $timestamp;
 
         // Timestamp is in the future
@@ -54,13 +70,5 @@ final class TimestampValidator
         } catch (InvalidTimestampException) {
             return false;
         }
-    }
-
-    /**
-     * Generate current timestamp.
-     */
-    public static function generate(): int
-    {
-        return \time();
     }
 }

@@ -12,8 +12,7 @@ namespace Tests;
 use Orchestra\Testbench\TestCase as BaseTestCase;
 
 /**
- * @internal
- *
  * @author Brian Faust <brian@cline.sh>
+ * @internal
  */
 abstract class TestCase extends BaseTestCase {}

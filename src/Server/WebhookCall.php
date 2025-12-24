@@ -1,6 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Server;
 
@@ -16,6 +21,14 @@ use Cline\Webhook\Support\IdGenerator;
 use Cline\Webhook\Support\TimestampValidator;
 use Illuminate\Support\Facades\Config;
 
+use const FILTER_VALIDATE_URL;
+
+use function array_merge;
+use function dispatch;
+use function filter_var;
+use function is_array;
+use function mb_strtoupper;
+
 /**
  * Fluent API for dispatching webhooks with Standard Webhooks compliance.
  *
@@ -24,6 +37,7 @@ use Illuminate\Support\Facades\Config;
  *     ->url('https://example.com/webhook')
  *     ->payload(['event' => 'user.created', 'data' => [...]])
  *     ->dispatch();
+ * @author Brian Faust <brian@cline.sh>
  */
 final class WebhookCall
 {
@@ -82,7 +96,7 @@ final class WebhookCall
      */
     public function url(string $url): self
     {
-        if (! \filter_var($url, \FILTER_VALIDATE_URL)) {
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
             throw InvalidUrlException::make($url);
         }
 
@@ -94,7 +108,7 @@ final class WebhookCall
     /**
      * Set the payload.
      *
-     * @param  array<string, mixed>  $payload
+     * @param array<string, mixed> $payload
      */
     public function payload(array $payload): self
     {
@@ -106,11 +120,11 @@ final class WebhookCall
     /**
      * Add custom headers.
      *
-     * @param  array<string, string>  $headers
+     * @param array<string, string> $headers
      */
     public function withHeaders(array $headers): self
     {
-        $this->headers = \array_merge($this->headers, $headers);
+        $this->headers = array_merge($this->headers, $headers);
 
         return $this;
     }
@@ -118,11 +132,11 @@ final class WebhookCall
     /**
      * Add metadata.
      *
-     * @param  array<string, mixed>  $meta
+     * @param array<string, mixed> $meta
      */
     public function meta(array $meta): self
     {
-        $this->meta = \array_merge($this->meta, $meta);
+        $this->meta = array_merge($this->meta, $meta);
 
         return $this;
     }
@@ -130,11 +144,11 @@ final class WebhookCall
     /**
      * Add tags for Laravel Horizon.
      *
-     * @param  array<string>|string  $tags
+     * @param array<string>|string $tags
      */
     public function tags(array|string $tags): self
     {
-        $this->tags = \array_merge($this->tags, \is_array($tags) ? $tags : [$tags]);
+        $this->tags = array_merge($this->tags, is_array($tags) ? $tags : [$tags]);
 
         return $this;
     }
@@ -144,7 +158,7 @@ final class WebhookCall
      */
     public function useHttpVerb(string $verb): self
     {
-        $this->httpVerb = \strtoupper($verb);
+        $this->httpVerb = mb_strtoupper($verb);
 
         return $this;
     }
@@ -298,7 +312,7 @@ final class WebhookCall
                 $job->onQueue($this->queue);
             }
 
-            \dispatch($job);
+            dispatch($job);
         } else {
             $job->handle();
         }
@@ -309,9 +323,11 @@ final class WebhookCall
      */
     public function dispatchIf(bool $condition): void
     {
-        if ($condition) {
-            $this->dispatch();
+        if (!$condition) {
+            return;
         }
+
+        $this->dispatch();
     }
 
     /**
@@ -319,7 +335,7 @@ final class WebhookCall
      */
     public function dispatchUnless(bool $condition): void
     {
-        $this->dispatchIf(! $condition);
+        $this->dispatchIf(!$condition);
     }
 
     /**
@@ -345,15 +361,15 @@ final class WebhookCall
         }
 
         $version = $this->signatureVersion ?? SignatureVersion::from(
-            Config::get('webhook.server.signature_version', SignatureVersion::V1_HMAC->value)
+            Config::get('webhook.server.signature_version', SignatureVersion::V1_HMAC->value),
         );
 
         return match ($version) {
             SignatureVersion::V1_HMAC => new HmacSigner(
-                $this->secret ?? Config::get('webhook.server.signing_secret')
+                $this->secret ?? Config::get('webhook.server.signing_secret'),
             ),
             SignatureVersion::V1A_ED25519 => new Ed25519Signer(
-                $this->ed25519PrivateKey ?? Config::get('webhook.server.ed25519_private_key')
+                $this->ed25519PrivateKey ?? Config::get('webhook.server.ed25519_private_key'),
             ),
         };
     }

@@ -1,12 +1,18 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook;
 
 use Cline\Webhook\Client\Http\Controllers\WebhookController;
 use Cline\Webhook\Client\Validators\Ed25519Validator;
 use Cline\Webhook\Support\TimestampValidator;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +22,7 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 
 /**
  * Service provider for webhook package.
+ * @author Brian Faust <brian@cline.sh>
  */
 final class WebhookServiceProvider extends PackageServiceProvider
 {
@@ -47,7 +54,7 @@ final class WebhookServiceProvider extends PackageServiceProvider
         Route::macro('webhooks', function (string $url, string $configName = 'default'): void {
             /** @var Router $this */
             Route::post($url, WebhookController::class)
-                ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+                ->withoutMiddleware([VerifyCsrfToken::class])
                 ->name("webhook.{$configName}");
         });
     }
@@ -65,7 +72,7 @@ final class WebhookServiceProvider extends PackageServiceProvider
 
             return new Ed25519Validator(
                 $publicKey,
-                new TimestampValidator($tolerance)
+                new TimestampValidator($tolerance),
             );
         });
     }

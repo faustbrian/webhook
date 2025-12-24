@@ -17,7 +17,7 @@
         }
     ],
     "require": {
-        "php": "^8.3.0",
+        "php": "^8.5.0",
         "illuminate/support": "^12.0",
         "illuminate/database": "^12.0",
         "illuminate/queue": "^12.0",
@@ -26,9 +26,9 @@
         "paragonie/sodium_compat": "^2.1"
     },
     "require-dev": {
+        "cline/coding-standard": "^1.5.6",
         "orchestra/testbench": "^10.8",
-        "symfony/var-dumper": "^7.4.0",
-        "pestphp/pest": "^3.0"
+        "symfony/var-dumper": "^7.4.0"
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
@@ -50,6 +50,19 @@
         }
     },
     "scripts": {
-        "test": "pest"
+        "lint": "vendor/bin/ecs check --fix",
+        "refactor": "rector",
+        "test": [
+            "@test:lint",
+            "@test:type-coverage",
+            "@test:unit",
+            "@test:types",
+            "@test:refactor"
+        ],
+        "test:lint": "vendor/bin/ecs check",
+        "test:refactor": "rector --dry-run",
+        "test:type-coverage": "pest --parallel --min=90 --type-coverage",
+        "test:types": "phpstan",
+        "test:unit": "pest --parallel --min=90 --coverage"
     }
 }

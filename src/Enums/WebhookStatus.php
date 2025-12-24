@@ -1,11 +1,19 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Enums;
 
+use function in_array;
+
 /**
  * Webhook processing status.
+ * @author Brian Faust <brian@cline.sh>
  */
 enum WebhookStatus: string
 {
@@ -34,7 +42,7 @@ enum WebhookStatus: string
      */
     public function isTerminal(): bool
     {
-        return \in_array($this, [self::PROCESSED, self::FAILED], true);
+        return in_array($this, [self::PROCESSED, self::FAILED], true);
     }
 
     /**
@@ -42,6 +50,6 @@ enum WebhookStatus: string
      */
     public function canProcess(): bool
     {
-        return \in_array($this, [self::PENDING, self::FAILED], true);
+        return in_array($this, [self::PENDING, self::FAILED], true);
     }
 }

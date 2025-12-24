@@ -1,6 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Client\Jobs;
 
@@ -13,9 +18,13 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Config;
+use Throwable;
+
+use function app;
 
 /**
  * Job to process webhook calls asynchronously.
+ * @author Brian Faust <brian@cline.sh>
  */
 final class ProcessWebhookJob implements ShouldQueue
 {
@@ -42,11 +51,19 @@ final class ProcessWebhookJob implements ShouldQueue
             $this->webhookCall->markAsProcessed();
 
             WebhookProcessedEvent::dispatch($this->webhookCall);
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             $this->webhookCall->markAsFailed($exception);
 
             throw $exception;
         }
+    }
+
+    /**
+     * Handle job failure.
+     */
+    public function failed(Throwable $exception): void
+    {
+        $this->webhookCall->markAsFailed($exception);
     }
 
     /**
@@ -56,7 +73,7 @@ final class ProcessWebhookJob implements ShouldQueue
     {
         // Check if a custom processor is configured for this config
         $processorClass = Config::get(
-            "webhook.client.configs.{$this->webhookCall->config_name}.webhook_processor"
+            "webhook.client.configs.{$this->webhookCall->config_name}.webhook_processor",
         );
 
         if ($processorClass) {
@@ -64,19 +81,12 @@ final class ProcessWebhookJob implements ShouldQueue
         }
 
         // No processor configured - this is valid if you just want to store webhooks
-        return new class implements ProcessesWebhook {
+        return new class() implements ProcessesWebhook
+        {
             public function process(WebhookCall $webhookCall): void
             {
                 // No-op processor - webhook is just stored
             }
         };
-    }
-
-    /**
-     * Handle job failure.
-     */
-    public function failed(\Throwable $exception): void
-    {
-        $this->webhookCall->markAsFailed($exception);
     }
 }

@@ -1,6 +1,11 @@
-<?php
+<?php declare(strict_types=1);
 
-declare(strict_types=1);
+/**
+ * Copyright (C) Brian Faust
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Cline\Webhook\Client\Validators;
 
@@ -8,9 +13,16 @@ use Cline\Webhook\Client\Contracts\SignatureValidator;
 use Cline\Webhook\Client\Exceptions\InvalidSignatureException;
 use Cline\Webhook\Support\TimestampValidator;
 use Illuminate\Http\Request;
+use Throwable;
+
+use function base64_decode;
+use function explode;
+use function sodium_crypto_sign_verify_detached;
+use function str_contains;
 
 /**
  * Ed25519 signature validator per Standard Webhooks spec.
+ * @author Brian Faust <brian@cline.sh>
  */
 final class Ed25519Validator implements SignatureValidator
 {
@@ -69,7 +81,7 @@ final class Ed25519Validator implements SignatureValidator
             $this->verify($request, $secret);
 
             return true;
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return false;
         }
     }
@@ -82,14 +94,14 @@ final class Ed25519Validator implements SignatureValidator
     private function parseSignatures(string $header): array
     {
         $signatures = [];
-        $parts = \explode(' ', $header);
+        $parts = explode(' ', $header);
 
         foreach ($parts as $part) {
-            if (! \str_contains($part, ',')) {
+            if (!str_contains($part, ',')) {
                 continue;
             }
 
-            [$version, $signature] = \explode(',', $part, 2);
+            [$version, $signature] = explode(',', $part, 2);
             $signatures[$version][] = $signature;
         }
 
@@ -101,17 +113,17 @@ final class Ed25519Validator implements SignatureValidator
      */
     private function verifySignature(string $signedContent, string $receivedSignature): bool
     {
-        $decodedKey = \base64_decode($this->publicKey, true);
-        $decodedSignature = \base64_decode($receivedSignature, true);
+        $decodedKey = base64_decode($this->publicKey, true);
+        $decodedSignature = base64_decode($receivedSignature, true);
 
         if ($decodedKey === false || $decodedSignature === false) {
             return false;
         }
 
-        return \sodium_crypto_sign_verify_detached(
+        return sodium_crypto_sign_verify_detached(
             $decodedSignature,
             $signedContent,
-            $decodedKey
+            $decodedKey,
         );
     }
 }
