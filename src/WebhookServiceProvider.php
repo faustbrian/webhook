@@ -1,0 +1,72 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Cline\Webhook;
+
+use Cline\Webhook\Client\Http\Controllers\WebhookController;
+use Cline\Webhook\Client\Validators\Ed25519Validator;
+use Cline\Webhook\Support\TimestampValidator;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
+
+/**
+ * Service provider for webhook package.
+ */
+final class WebhookServiceProvider extends PackageServiceProvider
+{
+    /**
+     * Configure the package.
+     */
+    public function configurePackage(Package $package): void
+    {
+        $package
+            ->name('webhook')
+            ->hasConfigFile()
+            ->hasMigration('create_webhook_calls_table');
+    }
+
+    /**
+     * Register package services.
+     */
+    public function packageRegistered(): void
+    {
+        $this->registerRouteMacro();
+        $this->registerValidators();
+    }
+
+    /**
+     * Register route macro for easy webhook endpoint setup.
+     */
+    private function registerRouteMacro(): void
+    {
+        Route::macro('webhooks', function (string $url, string $configName = 'default'): void {
+            /** @var Router $this */
+            Route::post($url, WebhookController::class)
+                ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+                ->name("webhook.{$configName}");
+        });
+    }
+
+    /**
+     * Register signature validators in container.
+     */
+    private function registerValidators(): void
+    {
+        // Register Ed25519Validator with public key from config
+        $this->app->bind(Ed25519Validator::class, function (): Ed25519Validator {
+            $configName = 'default'; // Could be made contextual
+            $publicKey = Config::get("webhook.client.configs.{$configName}.ed25519_public_key");
+            $tolerance = Config::get("webhook.client.configs.{$configName}.timestamp_tolerance_seconds", 300);
+
+            return new Ed25519Validator(
+                $publicKey,
+                new TimestampValidator($tolerance)
+            );
+        });
+    }
+}
