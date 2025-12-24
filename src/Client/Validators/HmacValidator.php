@@ -27,8 +27,11 @@ use function str_contains;
  */
 final readonly class HmacValidator implements SignatureValidator
 {
-    public function __construct(private ?TimestampValidator $timestampValidator = new TimestampValidator())
+    private readonly TimestampValidator $timestampValidator;
+
+    public function __construct(?TimestampValidator $timestampValidator = null)
     {
+        $this->timestampValidator = $timestampValidator ?? new TimestampValidator();
     }
 
     /**

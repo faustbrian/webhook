@@ -36,11 +36,15 @@ use Throwable;
  * @property int                        $timestamp
  * @property Carbon                     $updated_at
  * @property string                     $webhook_id
+ *
+ * @phpstan-type TFactory \Illuminate\Database\Eloquent\Factories\Factory<static>
+ *
  * @author Brian Faust <brian@cline.sh>
  */
 #[UseEloquentBuilder(WebhookCallBuilder::class)]
 final class WebhookCall extends Model
 {
+    /** @use HasFactory<TFactory> */
     use HasFactory;
     use MassPrunable;
 
@@ -71,6 +75,7 @@ final class WebhookCall extends Model
      */
     public function prunable(): Builder
     {
+        /** @var int $days */
         $days = Config::get(sprintf('webhook.client.configs.%s.delete_after_days', $this->config_name), 30);
 
         return self::query()->where('created_at', '<=', Date::now()->subDays($days));

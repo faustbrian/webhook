@@ -10,22 +10,10 @@
 namespace Cline\Webhook\Exceptions\Client;
 
 use Cline\Webhook\Exceptions\WebhookException;
+use InvalidArgumentException;
 
 /**
- * Thrown when webhook timestamp is invalid or outside tolerance window.
+ * Base exception for webhook timestamp validation errors.
  * @author Brian Faust <brian@cline.sh>
  */
-final class InvalidTimestampException extends WebhookException
-{
-    public static function future(int $timestamp, int $now): self
-    {
-        return new self(sprintf('Webhook timestamp (%d) is in the future (current: %d)', $timestamp, $now));
-    }
-
-    public static function expired(int $timestamp, int $now, int $tolerance): self
-    {
-        $age = $now - $timestamp;
-
-        return new self(sprintf('Webhook timestamp (%d) is too old. Age: %ds, Tolerance: %ds', $timestamp, $age, $tolerance));
-    }
-}
+abstract class InvalidTimestampException extends InvalidArgumentException implements WebhookException {}

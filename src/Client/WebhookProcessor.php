@@ -20,7 +20,7 @@ use Cline\Webhook\Enums\WebhookStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
-use Jobs\ProcessWebhookJob;
+use Cline\Webhook\Client\Jobs\ProcessWebhookJob;
 use function array_map;
 use function dispatch;
 use function in_array;
@@ -117,8 +117,8 @@ final readonly class WebhookProcessor
     /**
      * Filter headers based on configuration.
      *
-     * @param  array<string, array<string>> $allHeaders
-     * @param  array<string>                $storeHeaders
+     * @param  array<string, list<string|null>> $allHeaders
+     * @param  array<string>                    $storeHeaders
      * @return array<string, string>
      */
     private function filterHeaders(array $allHeaders, array $storeHeaders): array

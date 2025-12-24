@@ -9,10 +9,14 @@
 
 namespace Cline\Webhook\Exceptions;
 
-use Exception;
+use Throwable;
 
 /**
- * Base exception for all webhook-related errors.
+ * Marker interface for all webhook package exceptions.
+ *
+ * Consumers can catch this interface to handle any exception
+ * thrown by the Webhook package.
+ *
  * @author Brian Faust <brian@cline.sh>
  */
-abstract class WebhookException extends Exception {}
+interface WebhookException extends Throwable {}

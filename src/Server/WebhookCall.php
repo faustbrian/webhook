@@ -383,11 +383,22 @@ final class WebhookCall
 
         return match ($version) {
             SignatureVersion::V1_HMAC => new HmacSigner(
-                $this->secret ?? (string) Config::get('webhook.server.signing_secret'),
+                $this->secret ?? $this->getConfigString('webhook.server.signing_secret'),
             ),
             SignatureVersion::V1A_ED25519 => new Ed25519Signer(
-                $this->ed25519PrivateKey ?? (string) Config::get('webhook.server.ed25519_private_key'),
+                $this->ed25519PrivateKey ?? $this->getConfigString('webhook.server.ed25519_private_key'),
             ),
         };
+    }
+
+    /**
+     * Get string value from config.
+     */
+    private function getConfigString(string $key): string
+    {
+        /** @var string $value */
+        $value = Config::get($key);
+
+        return $value;
     }
 }

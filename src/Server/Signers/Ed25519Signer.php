@@ -10,8 +10,8 @@
 namespace Cline\Webhook\Server\Signers;
 
 use Cline\Webhook\Enums\SignatureVersion;
+use Cline\Webhook\Exceptions\Server\InvalidEd25519PrivateKeyException;
 use Cline\Webhook\Server\Contracts\Signer;
-use InvalidArgumentException;
 
 use function base64_decode;
 use function base64_encode;
@@ -39,7 +39,7 @@ final readonly class Ed25519Signer implements Signer
         // Decode the base64-encoded private key
         $decodedKey = base64_decode($this->privateKey, true);
 
-        throw_if($decodedKey === false, InvalidArgumentException::class, 'Invalid Ed25519 private key format');
+        throw_if($decodedKey === false, InvalidEd25519PrivateKeyException::invalidFormat());
 
         // Sign using sodium extension
         /** @var non-empty-string $decodedKey */

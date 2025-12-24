@@ -26,8 +26,11 @@ use function str_contains;
  */
 final readonly class Ed25519Validator implements SignatureValidator
 {
-    public function __construct(private string $publicKey, private ?TimestampValidator $timestampValidator = new TimestampValidator())
+    private readonly TimestampValidator $timestampValidator;
+
+    public function __construct(private string $publicKey, ?TimestampValidator $timestampValidator = null)
     {
+        $this->timestampValidator = $timestampValidator ?? new TimestampValidator();
     }
 
     /**

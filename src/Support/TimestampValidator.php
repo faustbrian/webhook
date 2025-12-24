@@ -9,8 +9,10 @@
 
 namespace Cline\Webhook\Support;
 
-use Illuminate\Support\Facades\Date;
+use Cline\Webhook\Exceptions\Client\ExpiredTimestampException;
+use Cline\Webhook\Exceptions\Client\FutureTimestampException;
 use Cline\Webhook\Exceptions\Client\InvalidTimestampException;
+use Illuminate\Support\Facades\Date;
 
 /**
  * Validates webhook timestamps for replay attack prevention.
@@ -48,12 +50,12 @@ final readonly class TimestampValidator
 
         // Timestamp is in the future
         if ($age < 0) {
-            throw InvalidTimestampException::future($timestamp, $now);
+            throw FutureTimestampException::fromTimestamps($timestamp, $now);
         }
 
         // Timestamp is too old
         if ($age > $this->toleranceSeconds) {
-            throw InvalidTimestampException::expired($timestamp, $now, $this->toleranceSeconds);
+            throw ExpiredTimestampException::fromTimestamps($timestamp, $now, $this->toleranceSeconds);
         }
     }
 
