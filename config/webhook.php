@@ -7,10 +7,26 @@ use Cline\Webhook\Client\Models\WebhookCall;
 use Cline\Webhook\Client\Profiles\ProcessEverything;
 use Cline\Webhook\Client\Responses\DefaultResponse;
 use Cline\Webhook\Client\Validators\HmacValidator;
+use Cline\Webhook\Enums\PrimaryKeyType;
 use Cline\Webhook\Enums\SignatureVersion;
 use Cline\Webhook\Server\Strategies\ExponentialBackoffStrategy;
 
 return [
+    /*
+    |--------------------------------------------------------------------------
+    | Primary Key Type
+    |--------------------------------------------------------------------------
+    |
+    | Determines the type of primary key used for webhook_calls table.
+    | Options: 'id' (auto-increment), 'ulid', 'uuid'
+    |
+    | - id: Traditional auto-incrementing integer (simplest, reveals count)
+    | - ulid: Time-ordered 26-char string (recommended, sortable + unique)
+    | - uuid: Random 36-char string (globally unique, not sortable)
+    |
+    */
+    'primary_key_type' => env('WEBHOOK_PRIMARY_KEY_TYPE', PrimaryKeyType::ULID->value),
+
     /*
     |--------------------------------------------------------------------------
     | Webhook Client Configuration

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Cline\Webhook\Enums\PrimaryKeyType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -13,8 +14,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('webhook_calls', function (Blueprint $table): void {
-            $table->id();
+        $primaryKeyType = PrimaryKeyType::tryFrom(config('webhook.primary_key_type', 'id')) ?? PrimaryKeyType::ID;
+
+        Schema::create('webhook_calls', function (Blueprint $table) use ($primaryKeyType): void {
+            match ($primaryKeyType) {
+                PrimaryKeyType::ULID => $table->ulid('id')->primary(),
+                PrimaryKeyType::UUID => $table->uuid('id')->primary(),
+                PrimaryKeyType::ID => $table->id(),
+            };
             $table->string('config_name')->index();
             $table->string('webhook_id')->index()->comment('Standard Webhooks ID for idempotency');
             $table->integer('timestamp')->comment('Unix timestamp from webhook-timestamp header');
