@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\Route;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
+use function sprintf;
+
 /**
  * Service provider for webhook package.
  * @author Brian Faust <brian@cline.sh>
@@ -52,7 +54,7 @@ final class WebhookServiceProvider extends PackageServiceProvider
         Route::macro('webhooks', function (string $url, string $configName = 'default'): void {
             Route::post($url, WebhookController::class)
                 ->withoutMiddleware([VerifyCsrfToken::class])
-                ->name('webhook.' . $configName);
+                ->name('webhook.'.$configName);
         });
     }
 
@@ -64,8 +66,10 @@ final class WebhookServiceProvider extends PackageServiceProvider
         // Register Ed25519Validator with public key from config
         $this->app->bind(function (): Ed25519Validator {
             $configName = 'default'; // Could be made contextual
+
             /** @var string $publicKey */
             $publicKey = Config::get(sprintf('webhook.client.configs.%s.ed25519_public_key', $configName));
+
             /** @var int $tolerance */
             $tolerance = Config::get(sprintf('webhook.client.configs.%s.timestamp_tolerance_seconds', $configName), 300);
 

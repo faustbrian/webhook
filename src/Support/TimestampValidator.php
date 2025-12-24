@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Date;
  * Standard Webhooks requires timestamp validation to prevent replay attacks.
  * Timestamps must be within a configured tolerance window.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class TimestampValidator
 {

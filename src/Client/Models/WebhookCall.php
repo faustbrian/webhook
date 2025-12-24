@@ -9,17 +9,20 @@
 
 namespace Cline\Webhook\Client\Models;
 
-use Illuminate\Support\Facades\Date;
 use Carbon\Carbon;
 use Cline\Webhook\Client\Models\Builders\WebhookCallBuilder;
 use Cline\Webhook\Enums\WebhookStatus;
 use Illuminate\Database\Eloquent\Attributes\UseEloquentBuilder;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Date;
 use Throwable;
+
+use function sprintf;
 
 /**
  * Webhook call received from external source.
@@ -37,7 +40,7 @@ use Throwable;
  * @property Carbon                     $updated_at
  * @property string                     $webhook_id
  *
- * @phpstan-type TFactory \Illuminate\Database\Eloquent\Factories\Factory<static>
+ * @phpstan-type TFactory Factory<static>
  *
  * @author Brian Faust <brian@cline.sh>
  */
@@ -72,6 +75,8 @@ final class WebhookCall extends Model
 
     /**
      * Get the prunable model query for automatic cleanup.
+     *
+     * @return Builder<self>
      */
     public function prunable(): Builder
     {

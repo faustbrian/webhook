@@ -16,12 +16,15 @@ use Cline\Webhook\Server\Contracts\Signer;
 use function base64_decode;
 use function base64_encode;
 use function sodium_crypto_sign_detached;
+use function sprintf;
+use function throw_if;
 
 /**
  * Ed25519 signature implementation per Standard Webhooks spec.
  *
  * @author Brian Faust <brian@cline.sh>
  * @see https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md
+ * @psalm-immutable
  */
 final readonly class Ed25519Signer implements Signer
 {

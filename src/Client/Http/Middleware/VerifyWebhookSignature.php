@@ -16,6 +16,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 
+use function event;
+use function resolve;
+use function sprintf;
+
 /**
  * Middleware to verify webhook signatures.
  * @author Brian Faust <brian@cline.sh>
@@ -30,11 +34,14 @@ final class VerifyWebhookSignature
     public function handle(Request $request, Closure $next, string $configName = 'default'): Response
     {
         $validator = $this->getSignatureValidator($configName);
+
         /** @var string $secret */
         $secret = Config::get(sprintf('webhook.client.configs.%s.signing_secret', $configName));
 
         if (!$validator->isValid($request, $secret)) {
-            event(new InvalidWebhookSignatureEvent($request, $configName));
+            event(
+                new InvalidWebhookSignatureEvent($request, $configName),
+            );
 
             return new Response('Invalid signature', \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
         }

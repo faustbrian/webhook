@@ -69,6 +69,9 @@ final class WebhookCall
 
     private ?string $webhookId = null;
 
+    /**
+     * @phpstan-ignore-next-line property.onlyRead
+     */
     private ?int $timestamp = null;
 
     private ?string $queue = null;
@@ -363,7 +366,7 @@ final class WebhookCall
         $throwOnFailure = Config::get('webhook.server.throw_exception_on_failure', false);
         $this->throwExceptionOnFailure = $this->throwExceptionOnFailure ?: $throwOnFailure;
 
-        /** @var string|null $queue */
+        /** @var null|string $queue */
         $queue = Config::get('webhook.server.queue');
         $this->queue = $this->queue ?: $queue;
     }
@@ -377,7 +380,7 @@ final class WebhookCall
             return $this->signer;
         }
 
-        /** @var string|int $configVersion */
+        /** @var int|string $configVersion */
         $configVersion = Config::get('webhook.server.signature_version', SignatureVersion::V1_HMAC->value);
         $version = $this->signatureVersion ?? SignatureVersion::from($configVersion);
 
@@ -396,9 +399,7 @@ final class WebhookCall
      */
     private function getConfigString(string $key): string
     {
-        /** @var string $value */
-        $value = Config::get($key);
-
-        return $value;
+        /** @var string */
+        return Config::get($key);
     }
 }

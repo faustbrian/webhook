@@ -13,16 +13,14 @@ use Cline\Webhook\Enums\WebhookStatus;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
+ * @author Brian Faust <brian@cline.sh>
  * @template TModelClass of \Illuminate\Database\Eloquent\Model
  * @extends Builder<TModelClass>
- * @author Brian Faust <brian@cline.sh>
  */
 final class WebhookCallBuilder extends Builder
 {
     /**
      * Filter to pending webhooks.
-     *
-     * @return static
      */
     public function pending(): static
     {
@@ -31,8 +29,6 @@ final class WebhookCallBuilder extends Builder
 
     /**
      * Filter to processing webhooks.
-     *
-     * @return static
      */
     public function processing(): static
     {
@@ -41,8 +37,6 @@ final class WebhookCallBuilder extends Builder
 
     /**
      * Filter to processed webhooks.
-     *
-     * @return static
      */
     public function processed(): static
     {
@@ -51,8 +45,6 @@ final class WebhookCallBuilder extends Builder
 
     /**
      * Filter to failed webhooks.
-     *
-     * @return static
      */
     public function failed(): static
     {
@@ -61,8 +53,6 @@ final class WebhookCallBuilder extends Builder
 
     /**
      * Filter to specific config.
-     *
-     * @return static
      */
     public function forConfig(string $configName): static
     {
@@ -71,8 +61,6 @@ final class WebhookCallBuilder extends Builder
 
     /**
      * Filter to specific webhook ID.
-     *
-     * @return static
      */
     public function byWebhookId(string $webhookId): static
     {

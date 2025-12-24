@@ -10,15 +10,16 @@
 namespace Cline\Webhook\Server\Exceptions;
 
 use Cline\Webhook\Exceptions\WebhookException;
+use RuntimeException;
 
 /**
  * Thrown when an invalid URL is provided for webhook dispatch.
  * @author Brian Faust <brian@cline.sh>
  */
-final class InvalidUrlException extends WebhookException
+final class InvalidUrlException extends RuntimeException implements WebhookException
 {
     public static function make(string $url): self
     {
-        return new self('Invalid webhook URL: ' . $url);
+        return new self('Invalid webhook URL: '.$url);
     }
 }

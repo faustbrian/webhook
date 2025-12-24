@@ -15,21 +15,26 @@ use Cline\Webhook\Client\Contracts\WebhookProfile;
 use Cline\Webhook\Client\Contracts\WebhookResponse;
 use Cline\Webhook\Client\Events\InvalidWebhookSignatureEvent;
 use Cline\Webhook\Client\Events\WebhookReceivedEvent;
+use Cline\Webhook\Client\Jobs\ProcessWebhookJob;
 use Cline\Webhook\Client\Models\WebhookCall;
 use Cline\Webhook\Enums\WebhookStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
-use Cline\Webhook\Client\Jobs\ProcessWebhookJob;
+
 use function array_map;
 use function dispatch;
+use function event;
 use function in_array;
 use function json_decode;
 use function mb_strtolower;
+use function resolve;
+use function sprintf;
 
 /**
  * Processes incoming webhook requests.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class WebhookProcessor
 {
@@ -47,7 +52,9 @@ final readonly class WebhookProcessor
     {
         // Verify signature
         if (!$this->verifySignature($request)) {
-            event(new InvalidWebhookSignatureEvent($request, $this->configName));
+            event(
+                new InvalidWebhookSignatureEvent($request, $this->configName),
+            );
 
             return new Response('Invalid signature', \Symfony\Component\HttpFoundation\Response::HTTP_UNAUTHORIZED);
         }
@@ -61,7 +68,9 @@ final readonly class WebhookProcessor
         $webhookCall = $this->storeWebhook($request);
 
         // Dispatch event
-        event(new WebhookReceivedEvent($webhookCall, $this->configName));
+        event(
+            new WebhookReceivedEvent($webhookCall, $this->configName),
+        );
 
         // Queue processing job
         $this->queueProcessing($webhookCall);
@@ -117,7 +126,7 @@ final readonly class WebhookProcessor
     /**
      * Filter headers based on configuration.
      *
-     * @param  array<string, list<string|null>> $allHeaders
+     * @param  array<string, list<null|string>> $allHeaders
      * @param  array<string>                    $storeHeaders
      * @return array<string, string>
      */
@@ -186,10 +195,8 @@ final readonly class WebhookProcessor
      */
     private function getSigningSecret(): string
     {
-        /** @var string $secret */
-        $secret = Config::get(sprintf('webhook.client.configs.%s.signing_secret', $this->configName));
-
-        return $secret;
+        /** @var string */
+        return Config::get(sprintf('webhook.client.configs.%s.signing_secret', $this->configName));
     }
 
     /**
@@ -221,9 +228,7 @@ final readonly class WebhookProcessor
      */
     private function getWebhookModel(): string
     {
-        /** @var class-string<WebhookCall> $modelClass */
-        $modelClass = Config::get(sprintf('webhook.client.configs.%s.webhook_model', $this->configName));
-
-        return $modelClass;
+        /** @var class-string<WebhookCall> */
+        return Config::get(sprintf('webhook.client.configs.%s.webhook_model', $this->configName));
     }
 }

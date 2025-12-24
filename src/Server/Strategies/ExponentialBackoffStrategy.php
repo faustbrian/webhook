@@ -19,6 +19,7 @@ use function random_int;
  *
  * Uses the formula: base * (2 ^ attempt) with random jitter
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class ExponentialBackoffStrategy implements BackoffStrategy
 {

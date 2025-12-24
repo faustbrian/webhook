@@ -10,15 +10,16 @@
 namespace Cline\Webhook\Client\Exceptions;
 
 use Cline\Webhook\Exceptions\WebhookException;
+use RuntimeException;
 
 /**
  * Thrown when webhook signature verification fails.
  * @author Brian Faust <brian@cline.sh>
  */
-final class InvalidSignatureException extends WebhookException
+final class InvalidSignatureException extends RuntimeException implements WebhookException
 {
     public static function make(string $webhookId): self
     {
-        return new self('Invalid webhook signature for webhook ID: ' . $webhookId);
+        return new self('Invalid webhook signature for webhook ID: '.$webhookId);
     }
 }

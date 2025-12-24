@@ -10,12 +10,15 @@
 namespace Cline\Webhook\Server\Exceptions;
 
 use Cline\Webhook\Exceptions\WebhookException;
+use RuntimeException;
+
+use function sprintf;
 
 /**
  * Thrown when maximum retry attempts are exceeded.
  * @author Brian Faust <brian@cline.sh>
  */
-final class MaxRetriesExceededException extends WebhookException
+final class MaxRetriesExceededException extends RuntimeException implements WebhookException
 {
     public static function make(int $maxRetries, string $url): self
     {

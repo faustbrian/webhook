@@ -10,15 +10,16 @@
 namespace Cline\Webhook\Client\Exceptions;
 
 use Cline\Webhook\Exceptions\WebhookException;
+use RuntimeException;
 
 /**
  * Thrown when a webhook call cannot be found in database.
  * @author Brian Faust <brian@cline.sh>
  */
-final class WebhookNotFoundException extends WebhookException
+final class WebhookNotFoundException extends RuntimeException implements WebhookException
 {
     public static function make(string $webhookId): self
     {
-        return new self('Webhook not found: ' . $webhookId);
+        return new self('Webhook not found: '.$webhookId);
     }
 }

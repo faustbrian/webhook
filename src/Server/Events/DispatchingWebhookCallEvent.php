@@ -15,6 +15,7 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Fired before dispatching a webhook call.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class DispatchingWebhookCallEvent
 {

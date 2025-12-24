@@ -29,7 +29,9 @@ use Throwable;
 use const JSON_THROW_ON_ERROR;
 
 use function array_merge;
+use function event;
 use function json_encode;
+use function throw_if;
 
 /**
  * Job to dispatch webhook calls with retry logic and exponential backoff.
@@ -64,7 +66,9 @@ final class CallWebhookJob implements ShouldQueue
         private readonly string $httpVerb,
         private readonly array $payload,
         private readonly array $headers,
-        /** @phpstan-ignore property.onlyWritten */
+        /**
+         * @phpstan-ignore property.onlyWritten
+         */
         private readonly array $meta,
         private readonly array $tags,
         private readonly Signer $signer,
@@ -83,7 +87,7 @@ final class CallWebhookJob implements ShouldQueue
      */
     public function tags(): array
     {
-        return array_merge($this->tags, ['webhook', 'webhook:' . $this->webhookId]);
+        return array_merge($this->tags, ['webhook', 'webhook:'.$this->webhookId]);
     }
 
     /**
@@ -132,7 +136,9 @@ final class CallWebhookJob implements ShouldQueue
             'webhook-signature' => $signature,
         ]);
 
-        event(new DispatchingWebhookCallEvent($this->webhookId, $this->url, $this->payload, $headers));
+        event(
+            new DispatchingWebhookCallEvent($this->webhookId, $this->url, $this->payload, $headers),
+        );
 
         $client = new Client([
             'timeout' => $this->timeoutInSeconds,
@@ -149,7 +155,9 @@ final class CallWebhookJob implements ShouldQueue
 
             // Consider 2xx responses as success
             if ($statusCode >= 200 && $statusCode < 300) {
-                event(new WebhookCallSucceededEvent($this->webhookId, $this->url, $statusCode, $this->attempts()));
+                event(
+                    new WebhookCallSucceededEvent($this->webhookId, $this->url, $statusCode, $this->attempts()),
+                );
 
                 return;
             }
@@ -172,14 +180,18 @@ final class CallWebhookJob implements ShouldQueue
      */
     private function handleFailure(Throwable $exception): void
     {
-        event(new WebhookCallFailedEvent($this->webhookId, $this->url, $this->attempts(), $exception));
+        event(
+            new WebhookCallFailedEvent($this->webhookId, $this->url, $this->attempts(), $exception),
+        );
 
         // Check if we have more attempts
         // Re-throw to trigger Laravel's retry mechanism
         throw_if($this->attempts() < $this->tries, $exception);
 
         // Final failure - all retries exhausted
-        event(new FinalWebhookCallFailedEvent($this->webhookId, $this->url, $this->attempts(), $exception));
+        event(
+            new FinalWebhookCallFailedEvent($this->webhookId, $this->url, $this->attempts(), $exception),
+        );
 
         if ($this->throwExceptionOnFailure) {
             throw MaxRetriesExceededException::make($this->tries, $this->url);

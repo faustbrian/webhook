@@ -16,6 +16,7 @@ use Throwable;
 /**
  * Fired when all webhook retry attempts are exhausted.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class FinalWebhookCallFailedEvent
 {

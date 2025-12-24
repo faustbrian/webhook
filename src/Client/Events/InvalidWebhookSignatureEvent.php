@@ -16,6 +16,7 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Fired when a webhook signature verification fails.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class InvalidWebhookSignatureEvent
 {

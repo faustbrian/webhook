@@ -19,28 +19,34 @@ use function base64_encode;
 use function explode;
 use function hash_equals;
 use function hash_hmac;
+use function sprintf;
 use function str_contains;
 
 /**
  * HMAC-SHA256 signature validator per Standard Webhooks spec.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class HmacValidator implements SignatureValidator
 {
-    private readonly TimestampValidator $timestampValidator;
-
-    public function __construct(?TimestampValidator $timestampValidator = null)
-    {
-        $this->timestampValidator = $timestampValidator ?? new TimestampValidator();
-    }
+    public function __construct(
+        private TimestampValidator $timestampValidator = new TimestampValidator(
+        ),
+    ) {}
 
     /**
      * {@inheritDoc}
      */
     public function verify(Request $request, string $secret): void
     {
+        /** @var string $webhookId */
         $webhookId = $request->header('webhook-id');
-        $timestamp = (int) $request->header('webhook-timestamp');
+
+        /** @var string $timestampHeader */
+        $timestampHeader = $request->header('webhook-timestamp');
+        $timestamp = (int) $timestampHeader;
+
+        /** @var string $signatures */
         $signatures = $request->header('webhook-signature');
 
         // Validate timestamp to prevent replay attacks

@@ -18,28 +18,35 @@ use Throwable;
 use function base64_decode;
 use function explode;
 use function sodium_crypto_sign_verify_detached;
+use function sprintf;
 use function str_contains;
 
 /**
  * Ed25519 signature validator per Standard Webhooks spec.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class Ed25519Validator implements SignatureValidator
 {
-    private readonly TimestampValidator $timestampValidator;
-
-    public function __construct(private string $publicKey, ?TimestampValidator $timestampValidator = null)
-    {
-        $this->timestampValidator = $timestampValidator ?? new TimestampValidator();
-    }
+    public function __construct(
+        private string $publicKey,
+        private TimestampValidator $timestampValidator = new TimestampValidator(
+        ),
+    ) {}
 
     /**
      * {@inheritDoc}
      */
     public function verify(Request $request, string $secret): void
     {
+        /** @var string $webhookId */
         $webhookId = $request->header('webhook-id');
-        $timestamp = (int) $request->header('webhook-timestamp');
+
+        /** @var string $timestampHeader */
+        $timestampHeader = $request->header('webhook-timestamp');
+        $timestamp = (int) $timestampHeader;
+
+        /** @var string $signatures */
         $signatures = $request->header('webhook-signature');
 
         // Validate timestamp to prevent replay attacks
@@ -114,7 +121,7 @@ final readonly class Ed25519Validator implements SignatureValidator
         $decodedKey = base64_decode($this->publicKey, true);
         $decodedSignature = base64_decode($receivedSignature, true);
 
-        if ($decodedKey === false || $decodedSignature === false) {
+        if ($decodedKey === false || $decodedSignature === false || $decodedKey === '' || $decodedSignature === '') {
             return false;
         }
 

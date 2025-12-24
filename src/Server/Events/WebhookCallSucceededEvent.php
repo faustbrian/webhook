@@ -15,6 +15,7 @@ use Illuminate\Queue\SerializesModels;
 /**
  * Fired when a webhook call succeeds.
  * @author Brian Faust <brian@cline.sh>
+ * @psalm-immutable
  */
 final readonly class WebhookCallSucceededEvent
 {

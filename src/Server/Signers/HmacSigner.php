@@ -14,12 +14,14 @@ use Cline\Webhook\Server\Contracts\Signer;
 
 use function base64_encode;
 use function hash_hmac;
+use function sprintf;
 
 /**
  * HMAC-SHA256 signature implementation per Standard Webhooks spec.
  *
  * @author Brian Faust <brian@cline.sh>
  * @see https://github.com/standard-webhooks/standard-webhooks/blob/main/spec/standard-webhooks.md
+ * @psalm-immutable
  */
 final readonly class HmacSigner implements Signer
 {
