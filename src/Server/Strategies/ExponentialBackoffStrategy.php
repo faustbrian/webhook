@@ -51,6 +51,6 @@ final readonly class ExponentialBackoffStrategy implements BackoffStrategy
             $delay += $jitter;
         }
 
-        return $delay;
+        return (int) $delay;
     }
 }

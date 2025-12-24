@@ -51,6 +51,10 @@ final class WebhookCall extends Model
     use HasFactory;
     use MassPrunable;
 
+    public $incrementing = false;
+
+    protected $keyType = 'string';
+
     protected $fillable = [
         'config_name',
         'webhook_id',
