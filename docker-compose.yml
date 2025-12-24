@@ -15,6 +15,7 @@ services:
             - ~/.composer:/.composer
             - .:/usr/src/myapp
             - ./docker/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+            - ./docker/php/conf.d/memory.ini:/usr/local/etc/php/conf.d/memory.ini
     profile:
         deploy:
             resources:
@@ -24,3 +25,4 @@ services:
         volumes:
             - .:/usr/src/myapp
             - ./docker/php/conf.d/error_reporting.ini:/usr/local/etc/php/conf.d/error_reporting.ini
+            - ./docker/php/conf.d/memory.ini:/usr/local/etc/php/conf.d/memory.ini
