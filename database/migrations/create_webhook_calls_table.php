@@ -14,7 +14,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $primaryKeyType = PrimaryKeyType::tryFrom(config('webhook.primary_key_type', 'id')) ?? PrimaryKeyType::ID;
+        $primaryKeyType = PrimaryKeyType::tryFrom(config('webhook.primary_key_type', 'ulid')) ?? PrimaryKeyType::ULID;
 
         Schema::create('webhook_calls', function (Blueprint $table) use ($primaryKeyType): void {
             match ($primaryKeyType) {
