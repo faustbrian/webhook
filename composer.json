@@ -1,0 +1,70 @@
+{
+    "name": "cline/webhook",
+    "description": "Standard-compliant Laravel webhook client and server with HMAC and Ed25519 signature support",
+    "license": "MIT",
+    "keywords": [
+        "php",
+        "laravel",
+        "webhook",
+        "standard-webhooks",
+        "hmac",
+        "ed25519"
+    ],
+    "authors": [
+        {
+            "name": "Brian Faust",
+            "email": "brian@cline.sh"
+        }
+    ],
+    "require": {
+        "php": "^8.5.0",
+        "cline/variable-keys": "^1.2.0",
+        "guzzlehttp/guzzle": "^7.10",
+        "illuminate/database": "^10.0 || ^11.0 || ^12.0",
+        "illuminate/queue": "^10.0 || ^11.0 || ^12.0",
+        "illuminate/support": "^10.0 || ^11.0 || ^12.0",
+        "paragonie/sodium_compat": "^2.4",
+        "spatie/laravel-package-tools": "^1.92.7"
+    },
+    "require-dev": {
+        "cline/coding-standard": "^1.6.3",
+        "orchestra/testbench": "^8.0 || ^9.0 || ^10.8",
+        "symfony/var-dumper": "^6.0 || ^7.4"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "autoload": {
+        "psr-4": {
+            "Cline\\Webhook\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Database\\Factories\\": "database/factories/",
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "ergebnis/composer-normalize": true,
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "lint": "vendor/bin/ecs check --fix",
+        "refactor": "rector",
+        "test": [
+            "@test:lint",
+            "@test:type-coverage",
+            "@test:unit",
+            "@test:types",
+            "@test:refactor"
+        ],
+        "test:lint": "vendor/bin/ecs check",
+        "test:refactor": "rector --dry-run",
+        "test:type-coverage": "pest --parallel --min=80 --type-coverage",
+        "test:types": "phpstan",
+        "test:unit": "pest --parallel --min=80 --coverage"
+    }
+}
