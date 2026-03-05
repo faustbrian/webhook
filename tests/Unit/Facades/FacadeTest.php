@@ -26,7 +26,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\Queue;
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Small;
@@ -52,14 +51,11 @@ use function method_exists;
 #[Small()]
 final class FacadeTest extends TestCase
 {
-    #[Override()]
     protected function setUp(): void
     {
         parent::setUp();
-
         // Set primary key type for webhook_calls table
         Config::set('webhook.primary_key_type', PrimaryKeyType::ULID->value);
-
         // Set required configuration for client tests
         Config::set('webhook.client.configs.default.signature_validator', HmacValidator::class);
         Config::set('webhook.client.configs.default.signing_secret', 'test-secret');
@@ -68,7 +64,6 @@ final class FacadeTest extends TestCase
         Config::set('webhook.client.configs.default.webhook_model', \Cline\Webhook\Client\Models\WebhookCall::class);
         Config::set('webhook.client.configs.default.store_headers', ['*']);
         Config::set('webhook.client.configs.default.timestamp_tolerance_seconds', 300);
-
         // Set required configuration for server tests
         Config::set('webhook.server.http_verb', 'POST');
         Config::set('webhook.server.timeout_in_seconds', 3);

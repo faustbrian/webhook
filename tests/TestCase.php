@@ -9,6 +9,7 @@
 
 namespace Tests;
 
+use Cline\VariableKeys\VariableKeysServiceProvider;
 use Cline\Webhook\Client\Contracts\SignatureValidator;
 use Cline\Webhook\Client\Contracts\WebhookProfile;
 use Cline\Webhook\Client\Contracts\WebhookResponse;
@@ -17,7 +18,6 @@ use Illuminate\Contracts\Config\Repository;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Application;
 use Orchestra\Testbench\TestCase as BaseTestCase;
-use Override;
 
 /**
  * @author Brian Faust <brian@cline.sh>
@@ -28,24 +28,19 @@ abstract class TestCase extends BaseTestCase
     /**
      * Setup the test environment.
      */
-    #[Override()]
     protected function setUp(): void
     {
         parent::setUp();
-
         Model::clearBootedModels();
-
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
     }
 
     /**
      * Tear down the test environment.
      */
-    #[Override()]
     protected function tearDown(): void
     {
         Model::clearBootedModels();
-
         parent::tearDown();
     }
 
@@ -58,6 +53,7 @@ abstract class TestCase extends BaseTestCase
     protected function getPackageProviders($app): array
     {
         return [
+            VariableKeysServiceProvider::class,
             WebhookServiceProvider::class,
         ];
     }

@@ -19,7 +19,6 @@ use Cline\Webhook\Server\WebhookCall;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Queue;
 use Iterator;
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -41,11 +40,9 @@ use function method_exists;
 #[Small()]
 final class WebhookCallTest extends TestCase
 {
-    #[Override()]
     protected function setUp(): void
     {
         parent::setUp();
-
         // Set default config values for testing
         Config::set('webhook.server.http_verb', 'POST');
         Config::set('webhook.server.timeout_in_seconds', 3);

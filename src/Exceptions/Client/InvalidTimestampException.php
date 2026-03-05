@@ -10,6 +10,9 @@
 namespace Cline\Webhook\Exceptions\Client;
 
 use Cline\Webhook\Exceptions\WebhookException;
+use Facade\IgnitionContracts\BaseSolution;
+use Facade\IgnitionContracts\ProvidesSolution;
+use Facade\IgnitionContracts\Solution;
 use InvalidArgumentException;
 
 /**
@@ -25,4 +28,17 @@ use InvalidArgumentException;
  * @see ExpiredTimestampException For timestamps that are too old
  * @see FutureTimestampException For timestamps ahead of server time
  */
-abstract class InvalidTimestampException extends InvalidArgumentException implements WebhookException {}
+abstract class InvalidTimestampException extends InvalidArgumentException implements ProvidesSolution, WebhookException
+{
+    public function getSolution(): Solution
+    {
+        /** @var BaseSolution $solution */
+        $solution = BaseSolution::create('Review package usage and configuration.');
+
+        return $solution
+            ->setSolutionDescription('Exception: '.$this->getMessage())
+            ->setDocumentationLinks([
+                'Package documentation' => 'https://github.com/cline/webhook',
+            ]);
+    }
+}

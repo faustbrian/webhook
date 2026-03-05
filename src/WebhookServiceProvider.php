@@ -18,6 +18,7 @@ use Cline\Webhook\Support\TimestampValidator;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
+use Override;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -58,7 +59,8 @@ final class WebhookServiceProvider extends PackageServiceProvider
      * Registers route macros, signature validators, and variable key mappings
      * when the package is loaded by Laravel's service container.
      */
-    public function packageRegistered(): void
+    #[Override()]
+    public function registeringPackage(): void
     {
         $this->registerRouteMacro();
         $this->registerValidators();
@@ -70,7 +72,8 @@ final class WebhookServiceProvider extends PackageServiceProvider
      * Registers variable key mappings after VariableKeysServiceProvider
      * has registered its singleton to ensure proper initialization.
      */
-    public function packageBooted(): void
+    #[Override()]
+    public function bootingPackage(): void
     {
         $this->registerVariableKeyMappings();
     }
